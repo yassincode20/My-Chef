@@ -8,9 +8,11 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "bcrypt>=5.0.0",
     "fastapi>=0.141.1",
+    "psycopg2-binary>=2.9.13",
     "psycopg[binary]>=3.3.5",
-    "pydantic>=2.13.5",
+    "pydantic[email]>=2.13.5",
     "sqlalchemy>=2.0.53",
     "uvicorn>=0.53.0",
 ]
