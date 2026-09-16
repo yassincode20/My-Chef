@@ -38,3 +38,15 @@ class User(BaseModel):
 class User_Login(BaseModel):
     login: str
     password: str
+
+
+class User_Prefrences(BaseModel):
+    diet_type: str = Field(min_length=3, max_length=50)
+    allergies: str = Field(min_length=3, max_length=100)
+
+
+class recipe_info(BaseModel):
+    user_id: int
+    id: int
+    name: str
+    recipe: str

@@ -1,13 +1,14 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Header, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import databasemodel
 from database import engine, session
-from usermodel import User, User_Login
+from usermodel import User, User_Login, User_Prefrences
 import bcrypt
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from jose import jwt
+from jose import jwt, JWTError
 from datetime import timedelta, timezone, datetime
 
 load_dotenv()
@@ -25,6 +26,8 @@ def create_access_token(user_id: int):
 
 
 app = FastAPI()
+
+security = HTTPBearer()
 databasemodel.base.metadata.create_all(bind=engine)
 
 
@@ -34,6 +37,23 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="ivalid payload"
+            )
+        return int(user_id)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials/Token expired",
+        )
 
 
 @app.post("/register")
@@ -74,3 +94,23 @@ def user_login(user_login: User_Login, db: Session = Depends(get_db)):
             return {f"access token": access_token, "token_type": "bearer"}
 
     return "user not found due invalid data"
+
+
+@app.post("/userprefrences")
+def get_prefrences(
+    prefrences: User_Prefrences,
+    db: Session = Depends(get_db),
+    User_id: int = Depends(get_current_user),
+):
+
+    db_user = (
+        db.query(databasemodel.user).filter(databasemodel.user.id == User_id).first()
+    )
+    if db_user:
+        new_prefrence = databasemodel.User_Prefrences(
+            **prefrences.model_dump(), user_id=User_id
+        )
+        db.add(new_prefrence)
+        db.commit()
+        return "success"
+    return "failed"
