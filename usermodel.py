@@ -33,3 +33,8 @@ class User(BaseModel):
             raise ValueError("Password must contain a special character")
 
         return password
+
+
+class User_Login(BaseModel):
+    login: str
+    password: str
