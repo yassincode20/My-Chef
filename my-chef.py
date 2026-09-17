@@ -10,6 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from datetime import timedelta, timezone, datetime
+import chef
+
 
 load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -114,3 +116,77 @@ def get_prefrences(
         db.commit()
         return "success"
     return "failed"
+
+
+@app.put("/userprefrences")
+def edit_prefrences(
+    updated_prefrence: User_Prefrences,
+    db: Session = Depends(get_db),
+    User_id: int = Depends(get_current_user),
+):
+    db_prefrence = (
+        db.query(databasemodel.User_Prefrences)
+        .filter(databasemodel.User_Prefrences.user_id == User_id)
+        .first()
+    )
+    if db_prefrence:
+        db_prefrence.diet_type = updated_prefrence.diet_type
+        db_prefrence.allergies = updated_prefrence.allergies
+        db.add(db_prefrence)
+        db.commit()
+        return "success"
+    return "error"
+
+
+@app.get("/userprefrences")
+def get_prefrences(
+    User_id: int = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    db_prefrence = (
+        db.query(databasemodel.User_Prefrences)
+        .filter(databasemodel.User_Prefrences.user_id == User_id)
+        .first()
+    )
+
+    if db_prefrence:
+        prefrences = User_Prefrences(
+            diet_type=db_prefrence.diet_type, allergies=db_prefrence.allergies
+        )
+
+        return prefrences
+    return "error"
+
+
+@app.post("/recipe")
+def create_recipe(
+    ingredients: str,
+    User_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db_prefrences = (
+        db.query(databasemodel.User_Prefrences)
+        .filter(databasemodel.User_Prefrences.user_id == User_id)
+        .first()
+    )
+    if db_prefrences:
+        recipe = chef.cook(
+            db_prefrences.diet_type, db_prefrences.allergies, ingredients
+        )
+        recipe.user_id = User_id
+        db_recipeinfo = databasemodel.recipe_info(**recipe.model_dump())
+        db.add(db_recipeinfo)
+        db.commit()
+        return "success"
+    return "error"
+
+
+@app.get("/recipe")
+def get_recipe(db: Session = Depends(get_db), User_id: int = Depends(get_current_user)):
+    db_recipe = (
+        db.query(databasemodel.recipe_info)
+        .filter(databasemodel.recipe_info.user_id == User_id)
+        .all()
+    )
+    if db_recipe:
+        return db_recipe
+    return []
