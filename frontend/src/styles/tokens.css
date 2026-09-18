@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap");
+
+:root {
+  /* Palette pulled from the logo: navy outlines, warm orange/coral,
+     cream background, peachy accents. */
+  --color-navy: #1c2b45;
+  --color-navy-soft: #33456a;
+  --color-orange: #f2762e;
+  --color-orange-dark: #d85f1c;
+  --color-coral: #ff8a5c;
+  --color-cream: #fff6e9;
+  --color-cream-card: #fffaf1;
+  --color-peach: #ffd9ad;
+  --color-peach-soft: #ffe9cf;
+  --color-success: #2f8f5b;
+  --color-success-bg: #e5f6ec;
+  --color-error: #d7263d;
+  --color-error-bg: #fdeaec;
+
+  --color-bg: var(--color-cream);
+  --color-fg: var(--color-navy);
+  --color-card: var(--color-cream-card);
+  --color-muted-fg: #5c6a86;
+  --color-border: var(--color-navy);
+
+  --font-display: "Fredoka", "Nunito", sans-serif;
+  --font-body: "Nunito", "Fredoka", sans-serif;
+
+  --border-width: 3px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --shadow-offset: 5px;
+  --shadow-hard: var(--shadow-offset) var(--shadow-offset) 0 0 var(--color-navy);
+  --shadow-hard-sm: 3px 3px 0 0 var(--color-navy);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --transition-press: 120ms ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #201a12;
+    --color-fg: #fff6e9;
+    --color-card: #2b2117;
+    --color-muted-fg: #cbbfa9;
+    --color-border: #fff6e9;
+    --shadow-hard: var(--shadow-offset) var(--shadow-offset) 0 0 #fff6e9;
+    --shadow-hard-sm: 3px 3px 0 0 #fff6e9;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #201a12;
+  --color-fg: #fff6e9;
+  --color-card: #2b2117;
+  --color-muted-fg: #cbbfa9;
+  --color-border: #fff6e9;
+  --shadow-hard: var(--shadow-offset) var(--shadow-offset) 0 0 #fff6e9;
+  --shadow-hard-sm: 3px 3px 0 0 #fff6e9;
+}

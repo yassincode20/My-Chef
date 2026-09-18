@@ -3,6 +3,7 @@ from google.genai import types
 import os
 from usermodel import recipe_info
 
+
 client = genai.Client()
 config = types.GenerateContentConfig(
     system_instruction="""You are an expert personal chef. Your job is to create a delicious, easy-to-read recipe based on the user's input. 
@@ -31,6 +32,6 @@ def cook(diet: str, allergy: str, ingredients: str):
 
     prompt = f"ingredients: {ingredients} diet: {diet} allergy: {allergy}"
     response = client.models.generate_content(
-        model="gemini-3.6-flash", contents=prompt, config=config
+        model="gemini-3.5-flash", contents=prompt, config=config
     )
     return recipe_info.model_validate_json(response.text)

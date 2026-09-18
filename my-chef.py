@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from datetime import timedelta, timezone, datetime
 import chef
+from typing import Optional
+import asyncio
 
 
 load_dotenv()
@@ -29,7 +31,7 @@ def create_access_token(user_id: int):
 
 app = FastAPI()
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 databasemodel.base.metadata.create_all(bind=engine)
 
 
@@ -41,20 +43,49 @@ def get_db():
         db.close()
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
+def get_current_useroptional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+):
+
+    if not credentials:
+        return None
+
+    # credentials.credentials is the raw string token FastAPI grabbed for you
+    token_string = credentials.credentials
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Turn the encrypted string back into a Python dictionary
+        payload = jwt.decode(token_string, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
+
+        if user_id is None:
+            return None  # Token is valid JWT, but missing the "sub" claim
+
+        return int(user_id)
+
+    except JWTError:
+        # Token was manipulated, fake, or expired
+        return None
+
+
+strict_security = HTTPBearer()
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(strict_security),
+):
+    token = credentials.credentials
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id: str = payload.get("sub")
+    try:
         if user_id is None:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="ivalid payload"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
             )
         return int(user_id)
     except JWTError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials/Token expired",
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="unathorized/bad token"
         )
 
 
@@ -62,7 +93,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def creat_user(user: User, db: Session = Depends(get_db)):
     try:
         hashed_password = bcrypt.hashpw(
-            user.password.encode("utf-8"), bcrypt.gensalt(12)
+            user.password.encode("utf-8"), bcrypt.gensalt(4)
         )
         new_user = databasemodel.user(
             username=user.user_name,
@@ -72,14 +103,18 @@ def creat_user(user: User, db: Session = Depends(get_db)):
         )
         db.add(new_user)
         db.commit()
-        return f"user info: {new_user.id} {new_user.name}"
+        return user
     except IntegrityError:
         db.rollback()
         return {"error": "Username or email already exists"}
 
 
 @app.post("/login")
-def user_login(user_login: User_Login, db: Session = Depends(get_db)):
+def user_login(
+    user_login: User_Login,
+    db: Session = Depends(get_db),
+    User_id: Optional[int] = Depends(get_current_useroptional),
+):
     db_user = (
         db.query(databasemodel.user)
         .filter(
@@ -88,12 +123,15 @@ def user_login(user_login: User_Login, db: Session = Depends(get_db)):
         )
         .first()
     )
-    user_attempt = user_login.password.encode("utf-8")
     if db_user:
+        if User_id == db_user.id:
+            return {"legit": "True"}
+
+        user_attempt = user_login.password.encode("utf-8")
         db_hash = db_user.password_hash.encode("utf-8")
         if bcrypt.checkpw(user_attempt, db_hash):
             access_token = create_access_token(db_user.id)
-            return {f"access token": access_token, "token_type": "bearer"}
+            return {f"access_token": access_token, "token_type": "bearer"}
 
     return "user not found due invalid data"
 
@@ -114,8 +152,8 @@ def get_prefrences(
         )
         db.add(new_prefrence)
         db.commit()
-        return "success"
-    return "failed"
+        return {"response": "success"}
+    return {"respone": "failed"}
 
 
 @app.put("/userprefrences")
@@ -134,8 +172,8 @@ def edit_prefrences(
         db_prefrence.allergies = updated_prefrence.allergies
         db.add(db_prefrence)
         db.commit()
-        return "success"
-    return "error"
+        return {"response": "success"}
+    return {"response": "failed"}
 
 
 @app.get("/userprefrences")
@@ -154,7 +192,7 @@ def get_prefrences(
         )
 
         return prefrences
-    return "error"
+    return {"response": "failed"}
 
 
 @app.post("/recipe")
@@ -172,11 +210,12 @@ def create_recipe(
         recipe = chef.cook(
             db_prefrences.diet_type, db_prefrences.allergies, ingredients
         )
+
         recipe.user_id = User_id
         db_recipeinfo = databasemodel.recipe_info(**recipe.model_dump())
         db.add(db_recipeinfo)
         db.commit()
-        return "success"
+        return db_recipeinfo.name, db_recipeinfo.recipe
     return "error"
 
 
