@@ -20,7 +20,7 @@ Do not include any other text or explanations.
 If all ingredients are valid food items, create the recipe following these rules:
 1. 'name' FIELD: Put ONLY the plain name of the recipe here. Do not use hashtags (#) or markdown bolding.
 2. 'recipe' FIELD: Put the full ingredients list and the step-by-step cooking directions entirely inside this field. Format this field beautifully using standard Markdown (use a bulleted list for ingredients and a numbered list for steps).
-3. 'user_id' FIELD: Completely ignore this field. Leave it at its default value.
+3. 'user_id' FIELD: Completely ignore this field. Leave it at its default value make it equal 0 now i will change it myself.
 4. DIET & ALLERGIES: Strictly follow the requested diet type and absolutely exclude any ingredients matching the user's listed allergies.
 5. TONE & STYLE: Write like a warm, enthusiastic human home cook. Get into the details immediately. Avoid robotic phrases like "As an AI..." or introductory filler text.""",
     response_mime_type="application/json",
@@ -28,10 +28,13 @@ If all ingredients are valid food items, create the recipe following these rules
 )
 
 
-def cook(diet: str, allergy: str, ingredients: str):
+async def cook(diet: str, allergy: str, ingredients: str):
 
     prompt = f"ingredients: {ingredients} diet: {diet} allergy: {allergy}"
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model="gemini-3.5-flash", contents=prompt, config=config
     )
     return recipe_info.model_validate_json(response.text)
+
+
+print(cook("none", "peanuts", "meat"))

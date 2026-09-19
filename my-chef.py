@@ -196,7 +196,7 @@ def get_prefrences(
 
 
 @app.post("/recipe")
-def create_recipe(
+async def create_recipe(
     ingredients: str,
     User_id: int = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -207,7 +207,7 @@ def create_recipe(
         .first()
     )
     if db_prefrences:
-        recipe = chef.cook(
+        recipe = await chef.cook(
             db_prefrences.diet_type, db_prefrences.allergies, ingredients
         )
 

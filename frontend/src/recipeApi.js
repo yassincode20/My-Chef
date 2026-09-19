@@ -29,7 +29,7 @@ export async function cookRecipe(token, ingredientsText) {
     return {
       ok: false,
       message:
-        "The server hit an error generating that recipe. If it keeps happening, try logging out and back in — otherwise this looks like a backend issue.",
+        "chef might be busy now try again later.",
     };
   }
   if (!res.ok) {
