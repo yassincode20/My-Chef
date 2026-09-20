@@ -64,10 +64,13 @@
 .recipe-list__item-name {
   font-size: 17px;
   margin-bottom: var(--space-2);
+  /* Not themed on purpose: this card's background (--color-peach-soft)
+     doesn't change for dark mode, so the text can't either. */
+  color: var(--color-navy);
 }
 
 .recipe-list__item-body {
   white-space: pre-wrap;
-  color: var(--color-fg);
+  color: var(--color-navy);
   line-height: 1.6;
 }

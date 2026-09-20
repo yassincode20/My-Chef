@@ -36,6 +36,9 @@
 
 .btn--secondary:hover:not(:disabled) {
   background: var(--color-peach-soft);
+  /* --color-peach-soft doesn't change for dark mode, so pin the text too
+     or it goes near-white-on-near-white in dark mode on hover. */
+  color: var(--color-navy);
 }
 
 /* Lift on hover, like the button is floating off the sticker sheet... */

@@ -49,11 +49,11 @@ export async function loginUser({ login, password }) {
     return { ok: false, message: extractMessage(data) || `Request failed (${res.status})` };
   }
   if (data && typeof data === "object" && data.access_token) {
-    return { ok: true, token: data.access_token };
+    return { ok: true, token: data.access_token, name: data.name, username: data.user_name };
   }
   if (data && typeof data === "object" && data.legit === "True") {
     // Backend says the caller's existing token already matches this user.
-    return { ok: true, alreadyLoggedIn: true };
+    return { ok: true, alreadyLoggedIn: true, name: data.name, username: data.user_name };
   }
   // Any other shape (the plain "user not found due invalid data" string,
   // or something unexpected) is treated as a failed login.

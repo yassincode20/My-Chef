@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 const initialValues = { login: "", password: "" };
 
 export default function LoginForm({ onSwitchToRegister, notice, onDismissNotice }) {
-  const { login } = useAuth();
+  const { login, updateProfile } = useAuth();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -68,13 +68,12 @@ export default function LoginForm({ onSwitchToRegister, notice, onDismissNotice 
       return;
     }
     if (result.token) {
-      // Passing along whatever identifier they typed as a display name —
-      // see the note in AuthContext.jsx on why (no backend endpoint
-      // returns the real profile name).
-      login(result.token, values.login.trim());
+      login(result.token, result.name, result.username);
     } else if (result.alreadyLoggedIn) {
       // Backend recognized an existing valid token for this user; there's
-      // no fresh token to store, so just leave the current session as-is.
+      // no fresh token to store, but it did send back the current
+      // name/username, so refresh those.
+      updateProfile(result.name, result.username);
     }
   }
 

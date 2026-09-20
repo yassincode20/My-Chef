@@ -13,12 +13,14 @@ from datetime import timedelta, timezone, datetime
 import chef
 from typing import Optional
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 
 load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_DAYS = int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS"))
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 
 
 def create_access_token(user_id: int):
@@ -30,6 +32,14 @@ def create_access_token(user_id: int):
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_ORIGIN],
+    allow_credentials=True,
+    allow_headers=["*"],
+    allow_methods=["*"],
+)
+
 
 security = HTTPBearer(auto_error=False)
 databasemodel.base.metadata.create_all(bind=engine)
@@ -125,13 +135,22 @@ def user_login(
     )
     if db_user:
         if User_id == db_user.id:
-            return {"legit": "True"}
+            return {
+                "legit": "True",
+                "user_name": db_user.username,
+                "name": db_user.name,
+            }
 
         user_attempt = user_login.password.encode("utf-8")
         db_hash = db_user.password_hash.encode("utf-8")
         if bcrypt.checkpw(user_attempt, db_hash):
             access_token = create_access_token(db_user.id)
-            return {f"access_token": access_token, "token_type": "bearer"}
+            return {
+                f"access_token": access_token,
+                "token_type": "bearer",
+                "user_name": db_user.username,
+                "name": db_user.name,
+            }
 
     return "user not found due invalid data"
 

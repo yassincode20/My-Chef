@@ -9,7 +9,7 @@ import "./UserMenu.css";
 // one would be redundant on the page this is rendered on (e.g. no
 // "Edit preferences" on the Preferences page itself).
 export default function UserMenu({ onEditPreferences, onShowRecipes }) {
-  const { displayName, logout } = useAuth();
+  const { name, username, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const closeTimer = useRef(null);
@@ -78,7 +78,10 @@ export default function UserMenu({ onEditPreferences, onShowRecipes }) {
 
       {open ? (
         <div className="user-menu__dropdown" role="menu">
-          <p className="user-menu__name">{displayName || "Chef"}</p>
+          <div className="user-menu__identity">
+            <p className="user-menu__name">{name || "Chef"}</p>
+            {username ? <p className="user-menu__username">@{username}</p> : null}
+          </div>
           {onEditPreferences ? (
             <button
               type="button"

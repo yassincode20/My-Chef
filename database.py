@@ -1,6 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-url = "postgresql://postgres:password@localhost:5432/mychef"
+load_dotenv()
+DB_URL = os.getenv("DB_URL")
+
+url = DB_URL
 engine = create_engine(url)
 session = sessionmaker(autoflush=False, autocommit=False, bind=engine)

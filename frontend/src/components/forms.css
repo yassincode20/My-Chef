@@ -94,7 +94,9 @@
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: var(--color-fg);
+  /* Not themed on purpose — same reason as .kitchen-result__body: this
+     row's background (--color-peach-soft) doesn't change for dark mode. */
+  color: var(--color-navy);
   word-break: break-word;
 }
 

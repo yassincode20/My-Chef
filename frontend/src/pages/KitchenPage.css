@@ -115,7 +115,10 @@
 
 .kitchen-result__body {
   white-space: pre-wrap;
-  color: var(--color-fg);
+  /* Not a themed color on purpose, same as .auth-tabs__btn: this sits on
+     --color-peach-soft, which never changes for dark mode, so the text
+     can't be themed either or it goes near-white-on-near-white. */
+  color: var(--color-navy);
   line-height: 1.6;
   background: var(--color-peach-soft);
   border: var(--border-width) solid var(--color-border);
