@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "mwm-frontend", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/sch/Desktop/MathwithMostafa/MathwithMostafa/frontend"], "port": 5173 }
+  ]
+}
