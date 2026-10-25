@@ -15,10 +15,9 @@ export async function parseBody(res) {
   }
 }
 
-// Your /register and /login endpoints both answer with HTTP 200 even when
-// something went wrong, using shapes like {"error": "..."} or a bare string
-// instead of a proper 4xx status. These helpers normalize that so the forms
-// only ever deal with { ok, data, message }.
+// /register and /login answer failures with proper 4xx statuses and a
+// {"detail": "..."} body. These helpers normalize that so the forms only
+// ever deal with { ok, data, message }.
 
 export async function registerUser({ user_name, name, email, password }) {
   const res = await fetch(`${BASE}/register`, {
@@ -51,13 +50,8 @@ export async function loginUser({ login, password }) {
   if (data && typeof data === "object" && data.access_token) {
     return { ok: true, token: data.access_token, name: data.name, username: data.user_name };
   }
-  if (data && typeof data === "object" && data.legit === "True") {
-    // Backend says the caller's existing token already matches this user.
-    return { ok: true, alreadyLoggedIn: true, name: data.name, username: data.user_name };
-  }
-  // Any other shape (the plain "user not found due invalid data" string,
-  // or something unexpected) is treated as a failed login.
-  return { ok: false, message: typeof data === "string" ? data : "Invalid username/email or password" };
+  // Anything unexpected is treated as a failed login.
+  return { ok: false, message: "Invalid username/email or password" };
 }
 
 export function extractMessage(data) {

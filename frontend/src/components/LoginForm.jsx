@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 const initialValues = { login: "", password: "" };
 
 export default function LoginForm({ onSwitchToRegister, notice, onDismissNotice }) {
-  const { login, updateProfile } = useAuth();
+  const { login } = useAuth();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -69,11 +69,6 @@ export default function LoginForm({ onSwitchToRegister, notice, onDismissNotice 
     }
     if (result.token) {
       login(result.token, result.name, result.username);
-    } else if (result.alreadyLoggedIn) {
-      // Backend recognized an existing valid token for this user; there's
-      // no fresh token to store, but it did send back the current
-      // name/username, so refresh those.
-      updateProfile(result.name, result.username);
     }
   }
 

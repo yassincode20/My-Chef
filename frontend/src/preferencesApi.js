@@ -44,13 +44,15 @@ export async function fetchPreferences(token) {
     headers: authHeaders(token),
   });
   const data = await parseBody(res);
+  // 404 means this user hasn't saved preferences yet — not an error.
+  if (res.status === 404) return { ok: true, exists: false };
+
   const result = normalize(res, data);
   if (!result.ok) return result;
 
   if (data && typeof data === "object" && "diet_type" in data) {
     return { ok: true, exists: true, diet_type: data.diet_type, allergies: data.allergies };
   }
-  // {"response": "failed"} (no row yet) lands here.
   return { ok: true, exists: false };
 }
 

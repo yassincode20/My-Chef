@@ -32,16 +32,15 @@ export async function cookRecipe(token, ingredientsText) {
         "chef might be busy now try again later.",
     };
   }
-  if (!res.ok) {
-    return { ok: false, message: `Request failed (${res.status})` };
-  }
-  if (typeof data === "string") {
-    // The backend returns the plain string "error" when there's no saved
-    // preferences row yet (chef.cook never gets called).
+  if (res.status === 400) {
+    // No saved preferences yet — the backend explains in `detail`.
     return {
       ok: false,
-      message: data === "error" ? "Save your diet preferences first, then try again." : data,
+      message: data?.detail || "Save your diet preferences first, then try again.",
     };
+  }
+  if (!res.ok) {
+    return { ok: false, message: `Request failed (${res.status})` };
   }
   if (Array.isArray(data) && data.length === 2) {
     const [name, recipeText] = data;

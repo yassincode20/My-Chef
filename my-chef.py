@@ -41,7 +41,6 @@ app.add_middleware(
 )
 
 
-security = HTTPBearer(auto_error=False)
 databasemodel.base.metadata.create_all(bind=engine)
 
 
@@ -51,31 +50,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-def get_current_useroptional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-):
-
-    if not credentials:
-        return None
-
-    # credentials.credentials is the raw string token FastAPI grabbed for you
-    token_string = credentials.credentials
-
-    try:
-        # Turn the encrypted string back into a Python dictionary
-        payload = jwt.decode(token_string, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-
-        if user_id is None:
-            return None  # Token is valid JWT, but missing the "sub" claim
-
-        return int(user_id)
-
-    except JWTError:
-        # Token was manipulated, fake, or expired
-        return None
 
 
 strict_security = HTTPBearer()
@@ -113,18 +87,17 @@ def creat_user(user: User, db: Session = Depends(get_db)):
         )
         db.add(new_user)
         db.commit()
-        return user
+        return {"response": "success"}
     except IntegrityError:
         db.rollback()
-        return {"error": "Username or email already exists"}
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username or email already exists",
+        )
 
 
 @app.post("/login")
-def user_login(
-    user_login: User_Login,
-    db: Session = Depends(get_db),
-    User_id: Optional[int] = Depends(get_current_useroptional),
-):
+def user_login(user_login: User_Login, db: Session = Depends(get_db)):
     db_user = (
         db.query(databasemodel.user)
         .filter(
@@ -134,13 +107,6 @@ def user_login(
         .first()
     )
     if db_user:
-        if User_id == db_user.id:
-            return {
-                "legit": "True",
-                "user_name": db_user.username,
-                "name": db_user.name,
-            }
-
         user_attempt = user_login.password.encode("utf-8")
         db_hash = db_user.password_hash.encode("utf-8")
         if bcrypt.checkpw(user_attempt, db_hash):
@@ -152,7 +118,24 @@ def user_login(
                 "name": db_user.name,
             }
 
-    return "user not found due invalid data"
+    # Same answer for unknown user and wrong password, so attackers can't
+    # tell which accounts exist
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid login or password"
+    )
+
+
+@app.get("/me")
+def get_me(User_id: int = Depends(get_current_user), db: Session = Depends(get_db)):
+    # The user comes from the token, never from the request body
+    db_user = (
+        db.query(databasemodel.user).filter(databasemodel.user.id == User_id).first()
+    )
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return {"user_name": db_user.username, "name": db_user.name, "email": db_user.email}
 
 
 @app.post("/userprefrences")
@@ -172,7 +155,7 @@ def get_prefrences(
         db.add(new_prefrence)
         db.commit()
         return {"response": "success"}
-    return {"respone": "failed"}
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
 
 @app.put("/userprefrences")
@@ -192,7 +175,9 @@ def edit_prefrences(
         db.add(db_prefrence)
         db.commit()
         return {"response": "success"}
-    return {"response": "failed"}
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Preferences not found"
+    )
 
 
 @app.get("/userprefrences")
@@ -211,7 +196,9 @@ def get_prefrences(
         )
 
         return prefrences
-    return {"response": "failed"}
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Preferences not found"
+    )
 
 
 @app.post("/recipe")
@@ -235,7 +222,10 @@ async def create_recipe(
         db.add(db_recipeinfo)
         db.commit()
         return db_recipeinfo.name, db_recipeinfo.recipe
-    return "error"
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Save your diet preferences first, then try again.",
+    )
 
 
 @app.get("/recipe")

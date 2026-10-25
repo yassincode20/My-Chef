@@ -35,6 +35,3 @@ async def cook(diet: str, allergy: str, ingredients: str):
         model="gemini-3.5-flash", contents=prompt, config=config
     )
     return recipe_info.model_validate_json(response.text)
-
-
-print(cook("none", "peanuts", "meat"))
