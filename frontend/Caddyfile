@@ -1,0 +1,13 @@
+:80 {
+    # /api/login → api:8000/login (handle_path strips the /api prefix, like your vite rewrite)
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Everything else is the React app
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}
